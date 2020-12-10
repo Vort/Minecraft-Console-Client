@@ -198,7 +198,10 @@ namespace MinecraftClient
                     if (Settings.ReplayMod_Enabled) { BotLoad(new ReplayCapture(Settings.ReplayMod_BackupInterval)); }
 
                     //Add your ChatBot here by uncommenting and adapting
-                    //BotLoad(new ChatBots.YourBot());
+                    //var mcb = new ChatBots.Script("LavaJumper.cs");
+                    var mcb = new ChatBots.BoatFlyer();
+                    BotLoad(mcb);
+                    mcb.Update();
                 }
             }
 
@@ -936,6 +939,13 @@ namespace MinecraftClient
         public bool SendRespawnPacket()
         {
             return handler.SendRespawnPacket();
+        }
+
+        public bool VehicleMove(Location location)
+        {
+            if (handler == null)
+                return false;
+            return handler.VehicleMove(location);
         }
 
         /// <summary>
@@ -2268,6 +2278,21 @@ namespace MinecraftClient
         public void OnTradeList(int windowID, List<VillagerTrade> trades, VillagerInfo villagerInfo)
         {
             DispatchBotEvent(bot => bot.OnTradeList(windowID, trades, villagerInfo));
+        }
+
+        public void OnTeleport(int teleportID)
+        {
+            DispatchBotEvent(bot => bot.OnTeleport(teleportID));
+        }
+
+        public void OnChunkLoaded(int chunkX, int chunkZ)
+        {
+            DispatchBotEvent(bot => bot.OnChunkLoaded(chunkX, chunkZ));
+        }
+
+        public void OnVehicleTeleport(double x, double y, double z, float yaw, float pitch)
+        {
+            DispatchBotEvent(bot => bot.OnVehicleTeleport(x, y, z, yaw, pitch));
         }
 
         #endregion

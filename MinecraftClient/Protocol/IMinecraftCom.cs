@@ -56,6 +56,8 @@ namespace MinecraftClient.Protocol
         /// <returns>True if packet successfully sent</returns>
         bool SendRespawnPacket();
 
+        bool VehicleMove(Location location);
+
         /// <summary>
         /// Inform the server of the client being used to connect
         /// </summary>

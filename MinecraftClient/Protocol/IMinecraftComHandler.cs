@@ -236,6 +236,8 @@ namespace MinecraftClient.Protocol
         /// <param name="food"></param>
         void OnUpdateHealth(float health, int food);
 
+        void OnTeleport(int teleportID);
+
         /// <summary>
         /// Called when the health of an entity changed
         /// </summary>
@@ -341,5 +343,9 @@ namespace MinecraftClient.Protocol
         /// <param name="isRegularVillager">True if regular villagers and false if the wandering trader.</param>
         /// <param name="canRestock">If the villager can restock his trades at a workstation, True for regular villagers and false for the wandering trader.</param>
         void OnTradeList(int windowID, List<VillagerTrade> trades, VillagerInfo villagerInfo);
+
+        void OnChunkLoaded(int chunkX, int chunkZ);
+
+        void OnVehicleTeleport(double x, double y, double z, float yaw, float pitch);
     }
 }

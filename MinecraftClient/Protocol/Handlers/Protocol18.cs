@@ -392,50 +392,62 @@ namespace MinecraftClient.Protocol.Handlers
                             int teleportID = dataTypes.ReadNextVarInt(packetData);
                             // Teleport confirm packet
                             SendPacket(PacketTypesOut.TeleportConfirm, dataTypes.GetVarInt(teleportID));
+                            handler.OnTeleport(teleportID);
                         }
                         break;
+                    case PacketTypesIn.VehicleMove:
+                        double x_ = dataTypes.ReadNextDouble(packetData);
+                        double y_ = dataTypes.ReadNextDouble(packetData);
+                        double z_ = dataTypes.ReadNextDouble(packetData);
+                        float yaw_ = dataTypes.ReadNextFloat(packetData);
+                        float pitch_ = dataTypes.ReadNextFloat(packetData);
+                        handler.OnVehicleTeleport(x_, y_, z_, yaw_, pitch_);
+                        break;
                     case PacketTypesIn.ChunkData:
-                        if (handler.GetTerrainEnabled())
                         {
                             int chunkX = dataTypes.ReadNextInt(packetData);
                             int chunkZ = dataTypes.ReadNextInt(packetData);
-                            bool chunksContinuous = dataTypes.ReadNextBool(packetData);
-                            if (protocolversion >= MC116Version && protocolversion <= MC1161Version)
-                                dataTypes.ReadNextBool(packetData); // Ignore old data - 1.16 to 1.16.1 only
-                            ushort chunkMask = protocolversion >= MC19Version
-                                ? (ushort)dataTypes.ReadNextVarInt(packetData)
-                                : dataTypes.ReadNextUShort(packetData);
-                            if (protocolversion < MC18Version)
+                            handler.OnChunkLoaded(chunkX, chunkZ);
+                            if (handler.GetTerrainEnabled())
                             {
-                                ushort addBitmap = dataTypes.ReadNextUShort(packetData);
-                                int compressedDataSize = dataTypes.ReadNextInt(packetData);
-                                byte[] compressed = dataTypes.ReadData(compressedDataSize, packetData);
-                                byte[] decompressed = ZlibUtils.Decompress(compressed);
-                                pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, addBitmap, currentDimension == 0, chunksContinuous, currentDimension, new Queue<byte>(decompressed));
-                            }
-                            else
-                            {
-                                if (protocolversion >= MC114Version)
-                                    dataTypes.ReadNextNbt(packetData);  // Heightmaps - 1.14 and above
-                                int biomesLength = 0;
-                                if (protocolversion >= MC1162Version)
-                                    if (chunksContinuous)
-                                        biomesLength = dataTypes.ReadNextVarInt(packetData); // Biomes length - 1.16.2 and above
-                                if (protocolversion >= MC115Version && chunksContinuous)
+                                bool chunksContinuous = dataTypes.ReadNextBool(packetData);
+                                if (protocolversion >= MC116Version && protocolversion <= MC1161Version)
+                                    dataTypes.ReadNextBool(packetData); // Ignore old data - 1.16 to 1.16.1 only
+                                ushort chunkMask = protocolversion >= MC19Version
+                                    ? (ushort)dataTypes.ReadNextVarInt(packetData)
+                                    : dataTypes.ReadNextUShort(packetData);
+                                if (protocolversion < MC18Version)
                                 {
-                                    if (protocolversion >= MC1162Version)
-                                    {
-                                        for (int i = 0; i < biomesLength; i++)
-                                        {
-                                            // Biomes - 1.16.2 and above
-                                            // Don't use ReadNextVarInt because it cost too much time
-                                            dataTypes.SkipNextVarInt(packetData);
-                                        }
-                                    }
-                                    else dataTypes.ReadData(1024 * 4, packetData); // Biomes - 1.15 and above
+                                    ushort addBitmap = dataTypes.ReadNextUShort(packetData);
+                                    int compressedDataSize = dataTypes.ReadNextInt(packetData);
+                                    byte[] compressed = dataTypes.ReadData(compressedDataSize, packetData);
+                                    byte[] decompressed = ZlibUtils.Decompress(compressed);
+                                    pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, addBitmap, currentDimension == 0, chunksContinuous, currentDimension, new Queue<byte>(decompressed));
                                 }
-                                int dataSize = dataTypes.ReadNextVarInt(packetData);
-                                pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, 0, false, chunksContinuous, currentDimension, packetData);
+                                else
+                                {
+                                    if (protocolversion >= MC114Version)
+                                        dataTypes.ReadNextNbt(packetData);  // Heightmaps - 1.14 and above
+                                    int biomesLength = 0;
+                                    if (protocolversion >= MC1162Version)
+                                        if (chunksContinuous)
+                                            biomesLength = dataTypes.ReadNextVarInt(packetData); // Biomes length - 1.16.2 and above
+                                    if (protocolversion >= MC115Version && chunksContinuous)
+                                    {
+                                        if (protocolversion >= MC1162Version)
+                                        {
+                                            for (int i = 0; i < biomesLength; i++)
+                                            {
+                                                // Biomes - 1.16.2 and above
+                                                // Don't use ReadNextVarInt because it cost too much time
+                                                dataTypes.SkipNextVarInt(packetData);
+                                            }
+                                        }
+                                        else dataTypes.ReadData(1024 * 4, packetData); // Biomes - 1.15 and above
+                                    }
+                                    int dataSize = dataTypes.ReadNextVarInt(packetData);
+                                    pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, 0, false, chunksContinuous, currentDimension, packetData);
+                                }
                             }
                         }
                         break;
@@ -1468,6 +1480,34 @@ namespace MinecraftClient.Protocol.Handlers
             try
             {
                 SendPacket(PacketTypesOut.ClientStatus, new byte[] { 0 });
+                return true;
+            }
+            catch (SocketException) { return false; }
+            catch (System.IO.IOException) { return false; }
+            catch (ObjectDisposedException) { return false; }
+        }
+
+        public bool VehicleMove(Location location)
+        {
+            try
+            {
+                SendPacket(PacketTypesOut.SteerBoat, dataTypes.ConcatBytes(
+                    dataTypes.GetBool(true),
+                    dataTypes.GetBool(true)));
+                SendPacket(PacketTypesOut.PlayerRotation, dataTypes.ConcatBytes(
+                    dataTypes.GetFloat(0.0f),
+                    dataTypes.GetFloat(0.0f),
+                    dataTypes.GetBool(false)));
+                SendPacket(PacketTypesOut.SteerVehicle, dataTypes.ConcatBytes(
+                    dataTypes.GetFloat(0.0f),
+                    dataTypes.GetFloat(0.98f),
+                    new byte[] { 0x01 }));
+                SendPacket(PacketTypesOut.VehicleMove, dataTypes.ConcatBytes(
+                    dataTypes.GetDouble(location.X),
+                    dataTypes.GetDouble(location.Y),
+                    dataTypes.GetDouble(location.Z),
+                    dataTypes.GetFloat(0.0f), // yaw
+                    dataTypes.GetFloat(0.0f))); // pitch
                 return true;
             }
             catch (SocketException) { return false; }

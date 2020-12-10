@@ -17,8 +17,9 @@ namespace MinecraftClientProxy
             listener.Start();
             TcpClient client = listener.AcceptTcpClient();
             
-            Console.WriteLine("Connecting to server on port 25566...");
-            TcpClient server = new TcpClient("localhost", 25566);
+            Console.WriteLine("Connecting to server on port 25565...");
+            TcpClient server = new TcpClient("proxima.theminers.id", 25565);
+            //TcpClient server = new TcpClient("temp.theminers.id", 25565);
 
             Console.WriteLine("Starting proxy...\n");
             new PacketProxy(client, server).Run();

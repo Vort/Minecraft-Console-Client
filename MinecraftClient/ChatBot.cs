@@ -94,7 +94,7 @@ namespace MinecraftClient
         /// <param name="text">Text from the server</param>
         /// <param name="json">Raw JSON from the server. This parameter will be NULL on MC 1.5 or lower!</param>
         public virtual void GetText(string text, string json) { }
-        
+
         /// <summary>
         /// Is called when the client has been disconnected fom the server
         /// </summary>
@@ -193,7 +193,7 @@ namespace MinecraftClient
         /// <param name="uuid">Player UUID</param>
         /// <param name="gamemode">New Game Mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator).</param>
         public virtual void OnGamemodeUpdate(string playername, Guid uuid, int gamemode) { }
-        
+
         /// <summary>
         /// Called when the Latency has been updated for a player
         /// </summary>
@@ -201,7 +201,7 @@ namespace MinecraftClient
         /// <param name="uuid">Player UUID</param>
         /// <param name="latency">Latency.</param>
         public virtual void OnLatencyUpdate(string playername, Guid uuid, int latency) { }
-        
+
         /// <summary>
         /// Called when the Latency has been updated for a player
         /// </summary>
@@ -210,7 +210,7 @@ namespace MinecraftClient
         /// <param name="uuid">Player UUID</param>
         /// <param name="latency">Latency.</param>
         public virtual void OnLatencyUpdate(Entity entity, string playername, Guid uuid, int latency) { }
-        
+
         /// <summary>
         /// Called when a map was updated
         /// </summary>
@@ -228,6 +228,12 @@ namespace MinecraftClient
         /// <param name="trades">List of trades.</param>
         /// <param name="villagerInfo">Contains Level, Experience, IsRegularVillager and CanRestock .</param>
         public virtual void OnTradeList(int windowID, List<VillagerTrade> trades, VillagerInfo villagerInfo) { }
+
+        public virtual void OnTeleport(int teleportID) { }
+
+        public virtual void OnChunkLoaded(int chunkX, int chunkZ) { }
+
+        public virtual void OnVehicleTeleport(double x, double y, double z, float yaw, float pitch) { }
 
         /// <summary>
         /// Called when received a title from the server
@@ -1296,6 +1302,11 @@ namespace MinecraftClient
             if (Handler.GetHealth() <= 0)
                 return Handler.SendRespawnPacket();
             else return false;
+        }
+
+        public bool VehicleMove(Location location)
+        {
+            return Handler.VehicleMove(location);
         }
 
         /// <summary>
