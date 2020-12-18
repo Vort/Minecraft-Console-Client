@@ -1424,6 +1424,32 @@ namespace MinecraftClient
             else return false;
         }
 
+        public bool StartDigging(Location location, bool swingArms = true, bool lookAtBlock = true)
+        {
+            if (GetTerrainEnabled())
+            {
+                // TODO select best face from current player location
+                Direction blockFace = Direction.Down;
+
+                // Look at block before attempting to break it
+                if (lookAtBlock)
+                    UpdateLocation(GetCurrentLocation(), location);
+
+                // Send dig start and dig end, will need to wait for server response to know dig result
+                // See https://wiki.vg/How_to_Write_a_Client#Digging for more details
+                return handler.SendPlayerDigging(0, location, blockFace)
+                    && (!swingArms || DoAnimation((int)Hand.MainHand));
+            }
+            else return false;
+        }
+
+        public bool StopDigging(Location location)
+        {
+            // TODO select best face from current player location
+            Direction blockFace = Direction.Down;
+            return handler.SendPlayerDigging(2, location, blockFace);
+        }
+
         /// <summary>
         /// Change active slot in the player inventory
         /// </summary>

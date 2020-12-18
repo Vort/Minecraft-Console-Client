@@ -868,6 +868,16 @@ namespace MinecraftClient
             return Handler.DigBlock(location, swingArms, lookAtBlock);
         }
 
+        protected bool StartDigging(Location location, bool swingArms = true, bool lookAtBlock = true)
+        {
+            return Handler.StartDigging(location, swingArms, lookAtBlock);
+        }
+
+        protected bool StopDigging(Location location)
+        {
+            return Handler.StopDigging(location);
+        }
+
         /// <summary>
         /// SetSlot
         /// </summary>
