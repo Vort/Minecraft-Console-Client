@@ -63,6 +63,7 @@ namespace MinecraftClient
         private object lastKeepAliveLock = new object();
         private int respawnTicks = 0;
         private int gamemode = 0;
+        private bool oddTick = false;
 
         private int playerEntityID;
 
@@ -527,7 +528,7 @@ namespace MinecraftClient
         }
 
         /// <summary>
-        /// Called ~10 times per second by the protocol handler
+        /// Called ~20 times per second by the protocol handler
         /// </summary>
         public void OnUpdate()
         {
@@ -535,7 +536,9 @@ namespace MinecraftClient
             {
                 try
                 {
-                    bot.Update();
+                    if (oddTick)
+                        bot.Update();
+                    bot.Update20();
                 }
                 catch (Exception e)
                 {
@@ -546,6 +549,10 @@ namespace MinecraftClient
                     else throw; //ThreadAbortException should not be caught
                 }
             }
+
+            oddTick = !oddTick;
+            if (oddTick)
+                return;
 
             lock (chatQueue)
             {
@@ -1443,7 +1450,15 @@ namespace MinecraftClient
             else return false;
         }
 
-        public bool StopDigging(Location location)
+        public bool CancelDigging(Location location)
+        {
+            // TODO select best face from current player location
+            Direction blockFace = Direction.Down;
+            return handler.SendPlayerDigging(1, location, blockFace);
+        }
+
+
+        public bool FinishDigging(Location location)
         {
             // TODO select best face from current player location
             Direction blockFace = Direction.Down;
@@ -1927,7 +1942,13 @@ namespace MinecraftClient
             entities.Add(entity.ID, entity);
             DispatchBotEvent(bot => bot.OnEntitySpawn(entity));
         }
-        
+
+        public void SetBlock(Location location, Block block)
+        {
+            world.SetBlock(location, block);
+            DispatchBotEvent(bot => bot.OnBlockChange(location, block));
+        }
+
         /// <summary>
         /// Called when an entity effects
         /// </summary>

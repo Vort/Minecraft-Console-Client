@@ -80,6 +80,11 @@ namespace MinecraftClient
         public virtual void Update() { }
 
         /// <summary>
+        /// Will be called every ~50ms (20fps) if loaded in MinecraftCom
+        /// </summary>
+        public virtual void Update20() { }
+
+        /// <summary>
         /// Any text sent by the server will be sent here by MinecraftCom
         /// </summary>
         /// <param name="text">Text from the server</param>
@@ -151,6 +156,8 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="entity">New Entity</param>
         public virtual void OnEntitySpawn(Mapping.Entity entity) { }
+
+        public virtual void OnBlockChange(Location location, Block block) { }
 
         /// <summary>
         /// Called when an entity despawns/dies nearby
@@ -873,9 +880,14 @@ namespace MinecraftClient
             return Handler.StartDigging(location, swingArms, lookAtBlock);
         }
 
-        protected bool StopDigging(Location location)
+        protected bool CancelDigging(Location location)
         {
-            return Handler.StopDigging(location);
+            return Handler.CancelDigging(location);
+        }
+
+        protected bool FinishDigging(Location location)
+        {
+            return Handler.FinishDigging(location);
         }
 
         /// <summary>

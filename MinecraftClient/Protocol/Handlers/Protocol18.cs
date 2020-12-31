@@ -151,7 +151,7 @@ namespace MinecraftClient.Protocol.Handlers
             {
                 do
                 {
-                    Thread.Sleep(100);
+                    Thread.Sleep(50);
                 }
                 while (Update());
             }
@@ -554,7 +554,7 @@ namespace MinecraftClient.Protocol.Handlers
                                     int blockY = (sectionY * 16) + localY;
                                     int blockZ = (sectionZ * 16) + localZ;
                                     var l = new Location(blockX, blockY, blockZ);
-                                    handler.GetWorld().SetBlock(l, b);
+                                    handler.SetBlock(l, b);
                                 }
                             }
                             else
@@ -587,7 +587,7 @@ namespace MinecraftClient.Protocol.Handlers
                                     int blockX = locationXZ >> 4;
                                     int blockZ = locationXZ & 0x0F;
                                     Block block = new Block(blockIdMeta);
-                                    handler.GetWorld().SetBlock(new Location(chunkX, chunkZ, blockX, blockY, blockZ), block);
+                                    handler.SetBlock(new Location(chunkX, chunkZ, blockX, blockY, blockZ), block);
                                 }
                             }
                         }
@@ -602,9 +602,9 @@ namespace MinecraftClient.Protocol.Handlers
                                 int blockZ = dataTypes.ReadNextInt(packetData);
                                 short blockId = (short)dataTypes.ReadNextVarInt(packetData);
                                 byte blockMeta = dataTypes.ReadNextByte(packetData);
-                                handler.GetWorld().SetBlock(new Location(blockX, blockY, blockZ), new Block(blockId, blockMeta));
+                                handler.SetBlock(new Location(blockX, blockY, blockZ), new Block(blockId, blockMeta));
                             }
-                            else handler.GetWorld().SetBlock(dataTypes.ReadNextLocation(packetData), new Block((ushort)dataTypes.ReadNextVarInt(packetData)));
+                            else handler.SetBlock(dataTypes.ReadNextLocation(packetData), new Block((ushort)dataTypes.ReadNextVarInt(packetData)));
                         }
                         break;
                     case PacketTypesIn.MapChunkBulk:

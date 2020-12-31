@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.Threading;
+using System.IO;
 
 namespace MinecraftClient.Protocol.Handlers
 {
@@ -14,11 +15,13 @@ namespace MinecraftClient.Protocol.Handlers
         private bool login_phase = true;
         TcpClient client;
         TcpClient server;
+        StreamWriter sw;
 
         public PacketProxy(TcpClient client, TcpClient server)
         {
             this.client = client;
             this.server = server;
+            sw = File.AppendText("output.log");
         }
 
         public void Run()
@@ -88,6 +91,19 @@ namespace MinecraftClient.Protocol.Handlers
             packetID = readNextVarInt(ref packetData);
         }
 
+        private void Log(string message)
+        {
+            Console.Write(message);
+            sw.Write(message);
+        }
+        private void LogLine(string message)
+        {
+            Log(DateTime.Now.ToString("[yyyy.MM.dd HH:mm:ss.fff] ") + message);
+            Console.WriteLine();
+            sw.WriteLine();
+            sw.Flush();
+        }
+
         private void handlePacket(int packetID, byte[] packetData, bool server)
         {
             //Console.WriteLine((server ? "[S -> C] 0x" : "[C -> S] 0x") + packetID.ToString("x2"));
@@ -98,19 +114,19 @@ namespace MinecraftClient.Protocol.Handlers
                     switch (packetID)
                     {
                         case 0x00:
-                            Console.WriteLine("[S -> C] Login rejected");
+                            LogLine("[S -> C] Login rejected");
                             break;
                         case 0x01:
-                            Console.WriteLine("[S -> C] Encryption request");
-                            Console.WriteLine(@"[WARNING] ENCRYPTION IS NOT SUPPORTED BY PROXY !!");
+                            LogLine("[S -> C] Encryption request");
+                            LogLine(@"[WARNING] ENCRYPTION IS NOT SUPPORTED BY PROXY !!");
                             break;
                         case 0x02:
                             login_phase = false;
-                            Console.WriteLine("[S -> C] Login successfull");
+                            LogLine("[S -> C] Login successfull");
                             break;
                         case 0x03:
                             compression_treshold = readNextVarInt(ref packetData);
-                            Console.WriteLine("[S -> C] Compression Treshold: " + compression_treshold);
+                            LogLine("[S -> C] Compression Treshold: " + compression_treshold);
                             break;
                     }
                 }
@@ -119,7 +135,7 @@ namespace MinecraftClient.Protocol.Handlers
                     switch (packetID)
                     {
                         case 0x00:
-                            Console.WriteLine("[C -> S] " + (handshake_phase ? "Handshake" : "Login request"));
+                            LogLine("[C -> S] " + (handshake_phase ? "Handshake" : "Login request"));
                             handshake_phase = false;
                             break;
                     }
@@ -130,24 +146,49 @@ namespace MinecraftClient.Protocol.Handlers
                 if (!server)
                 {
                     double x, y, z;
+                    float yaw, pitch;
                     bool g;
                     switch (packetID)
                     {
-                        //Do debug work here
-                        case 0x0C:
+                        case 0x11:
                             x = readNextDouble(ref packetData);
                             y = readNextDouble(ref packetData);
                             z = readNextDouble(ref packetData);
                             g = readNextBool(ref packetData);
-                            Console.WriteLine("[C -> S] Location: " + x + ", " + y + ", " + z + ", " + g);
+                            LogLine("[C -> S] Player Position: " + x + ", " + y + ", " + z + ", " + g);
                             break;
-                        case 0x0D:
+                        case 0x12:
                             x = readNextDouble(ref packetData);
                             y = readNextDouble(ref packetData);
                             z = readNextDouble(ref packetData);
                             readNextDouble(ref packetData); //skip 2 floats: look yaw & pitch
                             g = readNextBool(ref packetData);
-                            Console.WriteLine("[C -> S] Location: " + x + ", " + y + ", " + z + ", (look)" + ", " + g);
+                            LogLine("[C -> S] Player Position And Rotation: " + x + ", " + y + ", " + z + ", (look)" + ", " + g);
+                            break;
+                        case 0x13:
+                            yaw = readNextFloat(ref packetData);
+                            pitch = readNextFloat(ref packetData);
+                            g = readNextBool(ref packetData);
+                            LogLine("[C -> S] Player Rotation: " + yaw + ", " + pitch + ", " + g);
+                            break;
+                        case 0x15:
+                            x = readNextDouble(ref packetData);
+                            y = readNextDouble(ref packetData);
+                            z = readNextDouble(ref packetData);
+                            yaw = readNextFloat(ref packetData);
+                            pitch = readNextFloat(ref packetData);
+                            LogLine($"[C -> S] Vehicle Move: x: {x:0.0}, y: {y:0.0}, z: {z:0.0}, yaw: {yaw:0.0}, pitch: {pitch:0.0}");
+                            break;
+                        case 0x16:
+                            bool b1 = readNextBool(ref packetData);
+                            bool b2 = readNextBool(ref packetData);
+                            LogLine($"[C -> S] Steer boat: b1: {b1}, b2: {b2}");
+                            break;
+                        case 0x1C:
+                            float sideways = readNextFloat(ref packetData);
+                            float forward = readNextFloat(ref packetData);
+                            byte flags = readNextByte(ref packetData);
+                            LogLine($"[C -> S] Steer Vehicle: sideways: {sideways}, forward: {forward}, flags: {flags}");
                             break;
                         case 0x09:
                             byte window = readNextByte(ref packetData);
@@ -163,7 +204,47 @@ namespace MinecraftClient.Protocol.Handlers
                                 itemId = readNextVarInt(ref packetData);
                                 itemCount = readNextByte(ref packetData);
                             }
-                            Console.WriteLine("[C -> S] Window #" + window + " click: #" + slot + " button " + button + " action " + action + " mode " + mode + " item " + itemId + " x" + itemCount);
+                            LogLine("[C -> S] Window #" + window + " click: #" + slot + " button " + button + " action " + action + " mode " + mode + " item " + itemId + " x" + itemCount);
+                            break;
+                        case 0x1A:
+                            int status = readNextVarInt(ref packetData);
+                            ulong loc = ReadNextULong(ref packetData);
+                            int xi = (int)(loc >> 38);
+                            int yi = (int)(loc & 0xFFF);
+                            int zi = (int)(loc << 26 >> 38);
+                            int face = readNextVarInt(ref packetData);
+                            LogLine($"[C -> S] Player Digging: {status}, {xi}, {yi}, {zi}, {face}");
+                            break;
+                        default:
+                            Log($"[C2S:0x{packetID:X}]");
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (packetID)
+                    {
+                        case 0x35:
+                            double x = readNextDouble(ref packetData);
+                            double y = readNextDouble(ref packetData);
+                            double z = readNextDouble(ref packetData);
+                            readNextDouble(ref packetData); //skip 2 floats: look yaw & pitch
+                            byte locMask = readNextByte(ref packetData);
+                            LogLine("[S -> C] Player Position And Rotation: " + x + ", " + y + ", " + z + ", (look)" + ", " + locMask);
+                            break;
+                        case 0x5C:
+                            ulong loc = ReadNextULong(ref packetData);
+                            int xi = (int)(loc >> 38);
+                            int yi = (int)(loc & 0xFFF);
+                            int zi = (int)(loc << 26 >> 38);
+                            int block = readNextVarInt(ref packetData);
+                            int status = readNextVarInt(ref packetData);
+                            bool success = readNextBool(ref packetData);
+                            LogLine($"[S -> C] Acknowledge Player Digging: {xi}, {yi}, {zi}, {block}, {status}, {success}");
+                            break;
+                        default:
+                            // Too much spam
+                            Log($"[S2C:0x{packetID:X}]");
                             break;
                     }
                 }
@@ -238,11 +319,25 @@ namespace MinecraftClient.Protocol.Handlers
             return BitConverter.ToInt16(rawValue, 0);
         }
 
+        public ulong ReadNextULong(ref byte[] cache)
+        {
+            byte[] rawValue = readData(8, ref cache);
+            Array.Reverse(rawValue); //Endianness
+            return BitConverter.ToUInt64(rawValue, 0);
+        }
+
         private double readNextDouble(ref byte[] cache)
         {
             byte[] rawValue = readData(8, ref cache);
             Array.Reverse(rawValue); //Endianness
             return BitConverter.ToDouble(rawValue, 0);
+        }
+
+        private float readNextFloat(ref byte[] cache)
+        {
+            byte[] rawValue = readData(4, ref cache);
+            Array.Reverse(rawValue); //Endianness
+            return BitConverter.ToSingle(rawValue, 0);
         }
 
         private int readNextVarIntRAW(TcpClient c)

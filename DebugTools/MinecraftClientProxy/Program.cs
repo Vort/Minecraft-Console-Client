@@ -16,9 +16,9 @@ namespace MinecraftClientProxy
             TcpListener listener = new TcpListener(IPAddress.Any, 25565);
             listener.Start();
             TcpClient client = listener.AcceptTcpClient();
-            
-            Console.WriteLine("Connecting to server on port 25566...");
-            TcpClient server = new TcpClient("localhost", 25566);
+
+            Console.WriteLine("Connecting to server on port 25565...");
+            TcpClient server = new TcpClient("mc.prostocraft.ru", 25565);
 
             Console.WriteLine("Starting proxy...\n");
             new PacketProxy(client, server).Run();

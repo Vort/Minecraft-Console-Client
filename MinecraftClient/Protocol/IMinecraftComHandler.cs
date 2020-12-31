@@ -114,7 +114,7 @@ namespace MinecraftClient.Protocol
         void OnConnectionLost(ChatBot.DisconnectReason reason, string message);
 
         /// <summary>
-        /// Called ~10 times per second (10 ticks per second)
+        /// Called ~20 times per second (20 ticks per second)
         /// Useful for updating bots in other parts of the program
         /// </summary>
         void OnUpdate();
@@ -155,7 +155,9 @@ namespace MinecraftClient.Protocol
         /// </summary>
         /// <param name="entity">Spawned entity</param>
         void OnSpawnEntity(Entity entity);
-        
+
+        void SetBlock(Location location, Block block);
+
         /// <summary>
         /// Called when an entity has spawned
         /// </summary>
