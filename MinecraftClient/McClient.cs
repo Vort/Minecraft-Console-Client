@@ -1949,6 +1949,16 @@ namespace MinecraftClient
             DispatchBotEvent(bot => bot.OnBlockChange(location, block));
         }
 
+        public void OnChunkLoaded(int chunkX, int chunkZ)
+        {
+            DispatchBotEvent(bot => bot.OnChunkLoaded(chunkX, chunkZ));
+        }
+
+        public void OnChunkUnloaded(int chunkX, int chunkZ)
+        {
+            DispatchBotEvent(bot => bot.OnChunkUnloaded(chunkX, chunkZ));
+        }
+
         /// <summary>
         /// Called when an entity effects
         /// </summary>

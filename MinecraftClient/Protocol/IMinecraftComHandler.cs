@@ -156,6 +156,10 @@ namespace MinecraftClient.Protocol
         /// <param name="entity">Spawned entity</param>
         void OnSpawnEntity(Entity entity);
 
+        void OnChunkLoaded(int chunkX, int chunkZ);
+
+        void OnChunkUnloaded(int chunkX, int chunkZ);
+
         void SetBlock(Location location, Block block);
 
         /// <summary>

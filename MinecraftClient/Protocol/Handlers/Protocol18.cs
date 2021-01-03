@@ -395,48 +395,51 @@ namespace MinecraftClient.Protocol.Handlers
                         }
                         break;
                     case PacketTypesIn.ChunkData:
-                        if (handler.GetTerrainEnabled())
                         {
                             int chunkX = dataTypes.ReadNextInt(packetData);
                             int chunkZ = dataTypes.ReadNextInt(packetData);
-                            bool chunksContinuous = dataTypes.ReadNextBool(packetData);
-                            if (protocolversion >= MC116Version && protocolversion <= MC1161Version)
-                                dataTypes.ReadNextBool(packetData); // Ignore old data - 1.16 to 1.16.1 only
-                            ushort chunkMask = protocolversion >= MC19Version
-                                ? (ushort)dataTypes.ReadNextVarInt(packetData)
-                                : dataTypes.ReadNextUShort(packetData);
-                            if (protocolversion < MC18Version)
+                            if (handler.GetTerrainEnabled())
                             {
-                                ushort addBitmap = dataTypes.ReadNextUShort(packetData);
-                                int compressedDataSize = dataTypes.ReadNextInt(packetData);
-                                byte[] compressed = dataTypes.ReadData(compressedDataSize, packetData);
-                                byte[] decompressed = ZlibUtils.Decompress(compressed);
-                                pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, addBitmap, currentDimension == 0, chunksContinuous, currentDimension, new Queue<byte>(decompressed));
-                            }
-                            else
-                            {
-                                if (protocolversion >= MC114Version)
-                                    dataTypes.ReadNextNbt(packetData);  // Heightmaps - 1.14 and above
-                                int biomesLength = 0;
-                                if (protocolversion >= MC1162Version)
-                                    if (chunksContinuous)
-                                        biomesLength = dataTypes.ReadNextVarInt(packetData); // Biomes length - 1.16.2 and above
-                                if (protocolversion >= MC115Version && chunksContinuous)
+                                bool chunksContinuous = dataTypes.ReadNextBool(packetData);
+                                if (protocolversion >= MC116Version && protocolversion <= MC1161Version)
+                                    dataTypes.ReadNextBool(packetData); // Ignore old data - 1.16 to 1.16.1 only
+                                ushort chunkMask = protocolversion >= MC19Version
+                                    ? (ushort)dataTypes.ReadNextVarInt(packetData)
+                                    : dataTypes.ReadNextUShort(packetData);
+                                if (protocolversion < MC18Version)
                                 {
-                                    if (protocolversion >= MC1162Version)
-                                    {
-                                        for (int i = 0; i < biomesLength; i++)
-                                        {
-                                            // Biomes - 1.16.2 and above
-                                            // Don't use ReadNextVarInt because it cost too much time
-                                            dataTypes.SkipNextVarInt(packetData);
-                                        }
-                                    }
-                                    else dataTypes.ReadData(1024 * 4, packetData); // Biomes - 1.15 and above
+                                    ushort addBitmap = dataTypes.ReadNextUShort(packetData);
+                                    int compressedDataSize = dataTypes.ReadNextInt(packetData);
+                                    byte[] compressed = dataTypes.ReadData(compressedDataSize, packetData);
+                                    byte[] decompressed = ZlibUtils.Decompress(compressed);
+                                    pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, addBitmap, currentDimension == 0, chunksContinuous, currentDimension, new Queue<byte>(decompressed));
                                 }
-                                int dataSize = dataTypes.ReadNextVarInt(packetData);
-                                pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, 0, false, chunksContinuous, currentDimension, packetData);
+                                else
+                                {
+                                    if (protocolversion >= MC114Version)
+                                        dataTypes.ReadNextNbt(packetData);  // Heightmaps - 1.14 and above
+                                    int biomesLength = 0;
+                                    if (protocolversion >= MC1162Version)
+                                        if (chunksContinuous)
+                                            biomesLength = dataTypes.ReadNextVarInt(packetData); // Biomes length - 1.16.2 and above
+                                    if (protocolversion >= MC115Version && chunksContinuous)
+                                    {
+                                        if (protocolversion >= MC1162Version)
+                                        {
+                                            for (int i = 0; i < biomesLength; i++)
+                                            {
+                                                // Biomes - 1.16.2 and above
+                                                // Don't use ReadNextVarInt because it cost too much time
+                                                dataTypes.SkipNextVarInt(packetData);
+                                            }
+                                        }
+                                        else dataTypes.ReadData(1024 * 4, packetData); // Biomes - 1.15 and above
+                                    }
+                                    int dataSize = dataTypes.ReadNextVarInt(packetData);
+                                    pTerrain.ProcessChunkColumnData(chunkX, chunkZ, chunkMask, 0, false, chunksContinuous, currentDimension, packetData);
+                                }
                             }
+                            handler.OnChunkLoaded(chunkX, chunkZ);
                         }
                         break;
                     case PacketTypesIn.MapData:
@@ -651,11 +654,13 @@ namespace MinecraftClient.Protocol.Handlers
                         }
                         break;
                     case PacketTypesIn.UnloadChunk:
-                        if (protocolversion >= MC19Version && handler.GetTerrainEnabled())
+                        if (protocolversion >= MC19Version)
                         {
                             int chunkX = dataTypes.ReadNextInt(packetData);
                             int chunkZ = dataTypes.ReadNextInt(packetData);
-                            handler.GetWorld()[chunkX, chunkZ] = null;
+                            if (handler.GetTerrainEnabled())
+                                handler.GetWorld()[chunkX, chunkZ] = null;
+                            handler.OnChunkUnloaded(chunkX, chunkZ);
                         }
                         break;
                     case PacketTypesIn.PlayerInfo:

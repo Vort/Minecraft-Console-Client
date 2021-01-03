@@ -159,6 +159,10 @@ namespace MinecraftClient
 
         public virtual void OnBlockChange(Location location, Block block) { }
 
+        public virtual void OnChunkLoaded(int chunkX, int chunkZ) { }
+
+        public virtual void OnChunkUnloaded(int chunkX, int chunkZ) { }
+
         /// <summary>
         /// Called when an entity despawns/dies nearby
         /// </summary>
