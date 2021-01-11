@@ -1778,6 +1778,7 @@ namespace MinecraftClient
                 ConsoleIO.WriteLogLine(Translations.Get("extra.inventory_open", inventoryID, inventory.Title));
                 Translations.WriteLogLine("extra.inventory_interact");
                 DispatchBotEvent(bot => bot.OnInventoryOpen(inventoryID));
+                DispatchBotEvent(bot => bot.OnInventoryOpen(inventoryID, inventory.Title));
             }
         }
 

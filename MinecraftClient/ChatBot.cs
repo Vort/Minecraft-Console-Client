@@ -301,6 +301,12 @@ namespace MinecraftClient
         public virtual void OnInventoryOpen(int inventoryId) { }
 
         /// <summary>
+        /// Called when a container was opened
+        /// </summary>
+        /// <param name="inventoryId"></param>
+        public virtual void OnInventoryOpen(int inventoryId, string title) { }
+
+        /// <summary>
         /// Called when a container was closed
         /// </summary>
         /// <param name="inventoryId"></param>
