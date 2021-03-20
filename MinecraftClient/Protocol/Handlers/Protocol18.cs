@@ -364,6 +364,12 @@ namespace MinecraftClient.Protocol.Handlers
                         }
                         handler.OnRespawn();
                         break;
+                    case PacketTypesIn.PlayerAbilities:
+                        byte playerAbilitiesFlags = dataTypes.ReadNextByte(packetData);
+                        float flyingSpeed = dataTypes.ReadNextFloat(packetData);
+                        float fieldOfViewModifier = dataTypes.ReadNextFloat(packetData);
+                        handler.OnPlayerAbilities(playerAbilitiesFlags, flyingSpeed, fieldOfViewModifier);
+                        break;
                     case PacketTypesIn.PlayerPositionAndLook:
                         // These always need to be read, since we need the field after them for teleport confirm
                         double x = dataTypes.ReadNextDouble(packetData);
@@ -1474,6 +1480,25 @@ namespace MinecraftClient.Protocol.Handlers
             try
             {
                 SendPacket(PacketTypesOut.ClientStatus, new byte[] { 0 });
+                return true;
+            }
+            catch (SocketException) { return false; }
+            catch (System.IO.IOException) { return false; }
+            catch (ObjectDisposedException) { return false; }
+        }
+
+        public bool SetPlayerAbilities(byte flags, float flyingSpeed, float fieldOfViewModifier)
+        {
+            try
+            {
+                List<byte> fields = new List<byte>();
+                fields.Add(flags);
+                if (protocolversion < MC116Version)
+                {
+                    fields.AddRange(dataTypes.GetFloat(flyingSpeed));
+                    fields.AddRange(dataTypes.GetFloat(fieldOfViewModifier));
+                }
+                SendPacket(PacketTypesOut.PlayerAbilities, fields);
                 return true;
             }
             catch (SocketException) { return false; }

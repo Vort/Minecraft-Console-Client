@@ -1330,6 +1330,11 @@ namespace MinecraftClient
             else return false;
         }
 
+        public bool StopFlying()
+        {
+            return Handler.StopFlying();
+        }
+
         /// <summary>
         /// Enable or disable network packet event calling. If you want to capture every packet including login phase, please enable this in <see cref="Initialize()"/>
         /// </summary>

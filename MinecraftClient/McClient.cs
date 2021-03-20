@@ -74,6 +74,10 @@ namespace MinecraftClient
         private int playerTotalExperience;
         private byte CurrentSlot = 0;
 
+        private byte playerAbilitiesFlags = 0;
+        private float flyingSpeed = 0.05f;
+        private float fieldOfViewModifier = 0.1f;
+
         // Entity handling
         private Dictionary<int, Entity> entities = new Dictionary<int, Entity>();
 
@@ -945,6 +949,19 @@ namespace MinecraftClient
             return handler.SendRespawnPacket();
         }
 
+        public bool StopFlying()
+        {
+            const byte flyingMask = 0x02;
+            if ((playerAbilitiesFlags & flyingMask) != 0)
+            {
+                playerAbilitiesFlags &= byte.MaxValue ^ flyingMask;
+                return handler.SetPlayerAbilities(
+                    playerAbilitiesFlags, flyingSpeed, fieldOfViewModifier);
+            }
+            else
+                return false;
+        }
+
         /// <summary>
         /// Registers the given plugin channel for the given bot.
         /// </summary>
@@ -1630,6 +1647,14 @@ namespace MinecraftClient
             ClearInventories();
             DispatchBotEvent(bot => bot.OnRespawn());
         }
+
+        public void OnPlayerAbilities(byte flags, float flyingSpeed, float fieldOfViewModifier)
+        {
+            playerAbilitiesFlags = flags;
+            this.flyingSpeed = flyingSpeed;
+            this.fieldOfViewModifier = fieldOfViewModifier;
+        }
+
 
         /// <summary>
         /// Called when the server sends a new player location,

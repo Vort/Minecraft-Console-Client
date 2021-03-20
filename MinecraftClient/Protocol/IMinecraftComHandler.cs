@@ -87,6 +87,8 @@ namespace MinecraftClient.Protocol
         /// </summary>
         void OnRespawn();
 
+        void OnPlayerAbilities(byte flags, float flyingSpeed, float fieldOfViewModifier);
+
         /// <summary>
         /// This method is called when a new player joins the game
         /// </summary>

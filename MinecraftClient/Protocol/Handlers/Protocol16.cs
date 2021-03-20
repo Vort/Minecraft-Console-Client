@@ -657,7 +657,12 @@ namespace MinecraftClient.Protocol.Handlers
             }
             catch (SocketException) { return false; }
         }
-        
+
+        public bool SetPlayerAbilities(byte flags, float flyingSpeed, float fieldOfViewModifier)
+        {
+            throw new NotImplementedException();
+        }
+
         public bool SendUpdateSign(Location location, string line1, string line2, string line3, string line4)
         {
             return false; //Currently not implemented
