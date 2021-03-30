@@ -124,6 +124,8 @@ namespace MinecraftClient
         Thread cmdprompt;
         Thread timeoutdetector;
 
+        bool disconnected;
+
         /// <summary>
         /// Starts the main chat client
         /// </summary>
@@ -166,6 +168,7 @@ namespace MinecraftClient
         /// <param name="command">The text or command to send. Will only be sent if singlecommand is set to true.</param>
         private void StartClient(string user, string uuid, string sessionID, string server_ip, ushort port, int protocolversion, ForgeInfo forgeInfo, bool singlecommand, string command)
         {
+            disconnected = true;
             terrainAndMovementsEnabled = Settings.TerrainAndMovements;
             inventoryHandlingEnabled = Settings.InventoryHandling;
             entityHandlingEnabled = Settings.EntityHandling;
@@ -217,6 +220,7 @@ namespace MinecraftClient
 
                 try
                 {
+                    disconnected = false;
                     if (handler.Login())
                     {
                         if (singlecommand)
@@ -448,7 +452,9 @@ namespace MinecraftClient
         /// </summary>
         public void Disconnect()
         {
-            DispatchBotEvent(bot => bot.OnDisconnect(ChatBot.DisconnectReason.UserLogout, ""));
+            if (!disconnected)
+                DispatchBotEvent(bot => bot.OnDisconnect(ChatBot.DisconnectReason.UserLogout, ""));
+            disconnected = true;
 
             botsOnHold.Clear();
             botsOnHold.AddRange(bots);
@@ -511,24 +517,28 @@ namespace MinecraftClient
                     throw new InvalidOperationException(Translations.Get("exception.user_logout"));
             }
 
-            foreach (ChatBot bot in bots.ToArray())
+            if (!disconnected)
             {
-                try
+                foreach (ChatBot bot in bots.ToArray())
                 {
-                    will_restart |= bot.OnDisconnect(reason, message);
-                }
-                catch (Exception e)
-                {
-                    if (!(e is ThreadAbortException))
+                    try
                     {
-                        ConsoleIO.WriteLogLine("OnDisconnect: Got error from " + bot.ToString() + ": " + e.ToString());
+                        will_restart |= bot.OnDisconnect(reason, message);
                     }
-                    else throw; //ThreadAbortException should not be caught
+                    catch (Exception e)
+                    {
+                        if (!(e is ThreadAbortException))
+                        {
+                            ConsoleIO.WriteLogLine("OnDisconnect: Got error from " + bot.ToString() + ": " + e.ToString());
+                        }
+                        else throw; //ThreadAbortException should not be caught
+                    }
                 }
-            }
 
-            if (!will_restart)
-                Program.HandleFailure();
+                if (!will_restart)
+                    Program.HandleFailure();
+                disconnected = true;
+            }
         }
 
         /// <summary>

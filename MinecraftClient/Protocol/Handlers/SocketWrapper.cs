@@ -105,7 +105,7 @@ namespace MinecraftClient.Protocol.Handlers
         {
             try
             {
-                c.Close();
+                c.Client.Shutdown(SocketShutdown.Both);
             }
             catch (SocketException) { }
             catch (System.IO.IOException) { }

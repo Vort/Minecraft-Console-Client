@@ -1113,8 +1113,9 @@ namespace MinecraftClient.Protocol.Handlers
             {
                 if (netRead != null)
                 {
-                    netRead.Abort();
                     socketWrapper.Disconnect();
+                    if (!netRead.Join(10000))
+                        netRead.Abort();
                 }
             }
             catch { }
